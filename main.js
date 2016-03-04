@@ -24,11 +24,13 @@ function getLoaderForBuffer(filename, stats, fd, rawBuff) {
 function readFile(filename, stats, fd) {
     var rawBuff = new Buffer(stats.size);
     fs.read(fd, rawBuff, 0, rawBuff.length, null, function(err, bytesRead, rawBuff) {
-        var loader = getLoaderForBuffer(filename, stats, fd, rawBuff);
+        let loader = getLoaderForBuffer(filename, stats, fd, rawBuff);
         if (!loader)
             throw new Error('Could not find a loader for %s'.f(filename));
 
         console.log('Found loader %s for %s'.f(loader, filename));
+        let frames = loader.parseFrames(rawBuff);
+        console.log('Parsed %s frame(s).'.f(frames.length));
     });
 }
 
