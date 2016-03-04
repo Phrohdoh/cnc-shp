@@ -3,8 +3,7 @@
 'use strict';
 
 var fs = require('fs'),
-    binaryParser = require('binary-buffer-parser');
-
+    ts = require('./shp-ts');
 var args = process.argv.slice(2);
 
 String.prototype.f = function() {
@@ -14,55 +13,22 @@ String.prototype.f = function() {
     return util.format.apply(util, args);
 }
 
-function parseBuffer(filename, stats, fd, rawBuff, readBuff) {
-    var validity = isValidShpTS(filename, stats, fd, rawBuff, readBuff);
-    if (!validity.isValid)
-        console.log('%s is invalid:\n%s'.f(filename, validity.msg));
-}
-
-function isValidShpTS(filename, stats, fd, rawBuff, readBuff) {
-    var start = readBuff.tell();
-
-    var first2Bytes = readBuff.uint16();
-    if (first2Bytes !== 0) {
-        var pos = readBuff.tell();
-        readBuff.seek(start);
-        return {
-            isValid: false,
-            msg: 'At %s:\nexpected %s got %s'.f(pos, 0, first2Bytes)
-        };
-    }
-
-    readBuff.skip(4);
-    var frameCount = readBuff.uint16();
-    var pos = readBuff.tell();
-    if (pos + 24 * frameCount > rawBuff.length) {
-        readBuff.seek(start);
-        return {
-            isValid: false,
-            msg: 'At %s:\nexpected (%s + 24 * %s <= %s)'.f(pos, pos, frameCount, rawBuff.length)
-        };
-    }
-
-    readBuff.skip(4);
-    let width, height, frameNum, typeVal = 0;
-    do {
-        width = readBuff.uint16();
-        height = readBuff.uint16();
-        typeVal = readBuff.uint16();
-    } while (width == 0 && height == 0 && frameNum++ < frameCount);
-
-    readBuff.seek(start);
-    return {
-        isValid: typeVal < 4,
-        msg: null
-    };
+function getLoaderForBuffer(filename, stats, fd, rawBuff) {
+    return [ts].find(function(loader, index, thisArr) {
+        var validity = loader.isValidShp(filename, stats, fd, rawBuff);
+        if (validity.isValid)
+            return true;
+    });
 }
 
 function readFile(filename, stats, fd) {
     var rawBuff = new Buffer(stats.size);
-    fs.read(fd, rawBuff, 0, rawBuff.length, null, function(err, bytesRead, readBuff) {
-        parseBuffer(filename, stats, fd, rawBuff, new binaryParser(readBuff));
+    fs.read(fd, rawBuff, 0, rawBuff.length, null, function(err, bytesRead, rawBuff) {
+        var loader = getLoaderForBuffer(filename, stats, fd, rawBuff);
+        if (!loader)
+            throw new Error('Could not find a loader for %s'.f(filename));
+
+        console.log('Found loader %s for %s'.f(loader, filename));
     });
 }
 
@@ -85,8 +51,5 @@ function parseShp(filename) {
     });
 }
 
-for (let i = 0; i < args.length; i++) {
-    var filename = args[i];
-    console.log('Testing %s'.f(filename));
-    parseShp(filename);
-}
+for (let i = 0; i < args.length; i++)
+    parseShp(args[i]);
