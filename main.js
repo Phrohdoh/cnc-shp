@@ -41,7 +41,7 @@ function openFile(filename, stats) {
     });
 }
 
-function parseShp(filename) {
+exports.parseShp = function(filename) {
     fs.exists(filename, function(exists) {
         if (!exists)
             throw new Error('%s does not exist.'.f(filename));
