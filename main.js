@@ -29,9 +29,8 @@ function readFile(filename, stats, fd) {
     if (!loader)
         throw new Error('Could not find a loader for %s'.f(filename));
 
-    console.log('Found loader %s for %s'.f(loader, filename));
     let frames = loader.parseFrames(rawBuff);
-    console.log('Parsed %s frame(s).'.f(frames.length));
+    return frames;
 }
 
 function openFile(filename, stats) {
