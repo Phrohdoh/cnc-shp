@@ -2,11 +2,12 @@
   "name": "cnc-shp-parser",
   "version": "1.0.0",
   "description": "Library for parsing Command and Conquer SHP files",
-  "main": "main.js",
+  "main": "cnc-shp-parser.js",
   "author": "Phrohdoh",
   "license": "GPL-3.0",
   "repository": "https://github.com/Phrohdoh/cnc-shp-parser",
   "dependencies": {
-    "binary-buffer-parser": "^0.9.2"
+    "binary-buffer-parser": "^0.9.2",
+    "bluebird": "^3.3.3"
   }
 }
