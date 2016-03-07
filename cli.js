@@ -4,7 +4,7 @@
 
 let args = process.argv.slice(2),
     Promise = require('bluebird'),
-    shp = require('./cnc-shp-parser');
+    shp = require('./cnc-shp');
 
 Promise.map(args, function(filename) {
     return shp.parseShpAsync(filename)
