@@ -77,7 +77,7 @@ function parseFrame(rawBuff, readBuff, size) {
 
     frame.offset = {
         x: Math.trunc(x + (dataWidth / size.width) / 2),
-        y: Math.trunc(y + (dataHeight / size.width) / 2),
+        y: Math.trunc(y + (dataHeight / size.height) / 2),
     };
 
     frame.size = {
