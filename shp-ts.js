@@ -1,6 +1,6 @@
 'use strict';
 
-var parser = require('binary-buffer-parser');
+var parser = require('@phrohdoh/binary-buffer-parser');
 
 exports.toString = function() { return 'ts'; }
 
@@ -36,7 +36,8 @@ exports.isLoaderFor = function(filename, buff) {
 }
 
 function rleDecodeInto(srcArr, destArr, destIndex) {
-    for (let i = 0; i < srcArr.length; i++) {
+    let i = 0;
+    while (i < srcArr.length) {
         let cmd = srcArr[i++];
         if (cmd === 0) {
             let count = srcArr[i++];
@@ -88,6 +89,7 @@ function parseFrame(rawBuff, readBuff, size) {
     let format = readBuff.byte();
     readBuff.skip(11);
     let fileOffset = readBuff.uint32();
+    let data = Array(dataWidth * dataHeight);
 
     if (fileOffset === 0)
         return frame;
@@ -95,7 +97,6 @@ function parseFrame(rawBuff, readBuff, size) {
     let headerPos = readBuff.tell();
     readBuff.seek(fileOffset);
 
-    let data = Array(dataWidth * dataHeight);
     if (format === 3) {
         for (let i = 0; i < height; i++) {
             let len = readBuff.uint16() - 2;
