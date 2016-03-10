@@ -35,6 +35,13 @@ exports.isLoaderFor = function(filename, buff) {
     return true;
 }
 
+/**
+ * Decode data from the srcArr into the destArr starting at destIndex
+ * @param {Array.<Number>} srcArr
+ * @param {Array.<Number>} destArr
+ * @param {Number} destIndex
+ * @returns {Number} bytesRead
+ */
 function rleDecodeInto(srcArr, destArr, destIndex) {
     let i = 0;
     while (i < srcArr.length) {
@@ -47,8 +54,15 @@ function rleDecodeInto(srcArr, destArr, destIndex) {
         else
             destArr[destIndex++] = cmd;
     }
+
+    return i;
 }
 
+/**
+ * @param {Buffer.<Number>} rawBuff
+ * @param {Buffer.<Number>} readBuff
+ * @param {{width: Number, height: Number}} size
+ */
 function parseFrame(rawBuff, readBuff, size) {
     let frame = {
         size: {
