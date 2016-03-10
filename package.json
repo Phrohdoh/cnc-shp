@@ -1,6 +1,6 @@
 {
   "name": "cnc-shp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Tool for parsing Command and Conquer SHP files",
   "main": "cnc-shp.js",
   "author": "Phrohdoh",
