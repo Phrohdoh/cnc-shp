@@ -1,37 +1,42 @@
 'use strict';
 
-var parser = require('@phrohdoh/binary-buffer-parser');
+let parser = require('@phrohdoh/binary-buffer-parser'),
+    _ = require('./classes'),
+    ShpFileHeader = _.ShpFileHeader,
+    BuffPos = _.BuffPos;
 
-exports.toString = function() { return 'ts'; }
+//exports.toString = function() { return 'ts'; }
+let toString = () => 'ts';
 
-exports.isLoaderFor = function(filename, buff) {
-    let readBuff = new parser(buff);
-    let start = readBuff.tell();
+let isLoaderFor = function(filename, buffPos) {
+//exports.isLoaderFor = function(filename, buff) {
+    let buff = new parser(buff);
+    let start = buff.tell();
 
-    let first2Bytes = readBuff.uint16();
+    let first2Bytes = buff.uint16();
     if (first2Bytes !== 0) {
-        let pos = readBuff.tell();
-        readBuff.seek(start);
+        let pos = buff.tell();
+        buff.seek(start);
         return false;
     }
 
-    readBuff.skip(4);
-    let frameCount = readBuff.uint16();
-    let pos = readBuff.tell();
+    buff.skip(4);
+    let frameCount = buff.uint16();
+    let pos = buff.tell();
     if (pos + 24 * frameCount > buff.length) {
-        readBuff.seek(start);
+        buff.seek(start);
         return false;
     }
 
-    readBuff.skip(4);
+    buff.skip(4);
     let width, height, frameNum, typeVal = 0;
     do {
-        width = readBuff.uint16();
-        height = readBuff.uint16();
-        typeVal = readBuff.uint16();
+        width = buff.uint16();
+        height = buff.uint16();
+        typeVal = buff.uint16();
     } while (width == 0 && height == 0 && frameNum++ < frameCount);
 
-    readBuff.seek(start);
+    buff.seek(start);
     return true;
 }
 
@@ -60,10 +65,10 @@ function rleDecodeInto(srcArr, destArr, destIndex) {
 
 /**
  * @param {Buffer.<Number>} rawBuff
- * @param {Buffer.<Number>} readBuff
+ * @param {Buffer.<Number>} buff
  * @param {{width: Number, height: Number}} size
  */
-function parseFrame(rawBuff, readBuff, size) {
+function parseFrame(buffPos size) {
     let frame = {
         size: {
             width: 0,
@@ -76,10 +81,12 @@ function parseFrame(rawBuff, readBuff, size) {
         data: undefined,
     };
 
-    let x = readBuff.uint16(),
-        y = readBuff.uint16(),
-        width = readBuff.uint16(),
-        height = readBuff.uint16();
+    let buff = buffPos.buff;
+
+    let x = buff.uint16(),
+        y = buff.uint16(),
+        width = buff.uint16(),
+        height = buff.uint16();
 
     let dataWidth = width,
         dataHeight = height;
@@ -100,51 +107,51 @@ function parseFrame(rawBuff, readBuff, size) {
         height: dataHeight
     };
 
-    let format = readBuff.byte();
-    readBuff.skip(11);
-    let fileOffset = readBuff.uint32();
+    let format = buff.byte();
+    buff.skip(11);
+    let fileOffset = buff.uint32();
     let data = Array(dataWidth * dataHeight);
 
     if (fileOffset === 0)
         return frame;
 
-    let headerPos = readBuff.tell();
-    readBuff.seek(fileOffset);
+    let headerPos = buff.tell();
+    buff.seek(fileOffset);
 
     if (format === 3) {
         for (let i = 0; i < height; i++) {
-            let len = readBuff.uint16() - 2;
-            rleDecodeInto(readBuff.byte(len), data, dataWidth * i);
+            let len = buff.uint16() - 2;
+            rleDecodeInto(buff.byte(len), data, dataWidth * i);
         }
     }
     else {
-        let len = format === 2 ? readBuff.uint16() - 2 : width;
+        let len = format === 2 ? buff.uint16() - 2 : width;
         for (let i = 0; i < height; i++) {
-            let bytes = readBuff.byte(len);
+            let bytes = buff.byte(len);
             for (let bi = 0; bi < bytes.length; bi++)
                 data[dataWidth * i + bi] = bytes[bi];
         }
     }
 
     frame.data = data;
-    readBuff.seek(headerPos);
+    buff.seek(headerPos);
     return frame;
 }
 
-exports.parseFrames = function(rawBuff) {
-    let readBuff = new parser(rawBuff);
-    let start = readBuff.tell();
+let parseFrames = function(buffPos) {
+    let buff = buffPos.buff;
+    let start = buff.tell();
 
-    readBuff.skip(2);
-    let width = readBuff.uint16(),
-        height = readBuff.uint16(),
+    buff.skip(2);
+    let width = buff.uint16(),
+        height = buff.uint16(),
         size = { width, height },
-        frameCount = readBuff.uint16();
+        frameCount = buff.uint16();
 
     let frames = Array(frameCount);
     for (let i = 0; i < frameCount; i++)
-        frames[i] = parseFrame(rawBuff, readBuff, size);
+        frames[i] = parseFrame(rawBuff, buff, size);
 
-    readBuff.seek(start);
+    buff.seek(start);
     return frames;
 }
